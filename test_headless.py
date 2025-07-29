@@ -81,12 +81,19 @@ def test_command_line_tools():
         import sys
         
         # Test vault command
-        result = subprocess.run([sys.executable, "-m", "cybervault.vault", "--help"], 
-                              capture_output=True, text=True, timeout=10)
-        if result.returncode == 0:
-            print("✓ vault command works")
-        else:
-            print(f"⚠ vault command failed: {result.stderr}")
+        try:
+            result = subprocess.run([sys.executable, "-m", "cybervault.vault", "--help"], 
+                                  capture_output=True, text=True, timeout=10)
+            if result.returncode == 0:
+                print("✓ vault command works")
+            else:
+                print(f"⚠ vault command failed: {result.stderr}")
+                return False
+        except subprocess.TimeoutExpired:
+            print("⚠ vault command timed out")
+            return False
+        except FileNotFoundError:
+            print("⚠ vault command not found")
             return False
             
         return True
