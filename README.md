@@ -10,7 +10,7 @@ A secure encrypted notes vault with a beautiful cyberpunk-themed graphical user 
 - 📝 **Rich text editing** for your encrypted notes
 - 🗂️ **Organized note management** with titles and content
 - 💾 **Automatic saving** of encrypted data
-- 🚀 **Cross-platform** - works on Windows, macOS, and Linux
+- 🚀 **Cross-platform** - works on Windows, macOS, and Linux (CI tested on Ubuntu and macOS)
 
 ## Installation
 

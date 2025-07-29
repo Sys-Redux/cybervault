@@ -39,13 +39,7 @@ password = your-testpypi-api-token
 
 ## Building the Package
 
-### Option 1: Use the Build Script
-
-```bash
-python build_package.py
-```
-
-### Option 2: Manual Build
+### Manual Build
 
 ```bash
 # Clean previous builds
@@ -101,14 +95,18 @@ To release a new version:
 
 ## GitHub Actions (Automated Publishing)
 
-The `.github/workflows/python-package.yml` file is configured to automatically publish when you create a release on GitHub.
+The `.github/workflows/python-package.yml` file is configured to automatically test and publish when you create a release on GitHub.
+
+**Test Matrix:**
+- Ubuntu (Python 3.10, 3.11)
+- macOS (Python 3.10, 3.11)
 
 To use this:
 
 1. Push your code to GitHub
 2. Create a release with a tag (e.g., `v1.0.0`)
 3. Add your PyPI API token as a GitHub secret named `PYPI_API_TOKEN`
-4. The workflow will automatically build and publish
+4. The workflow will automatically test on Ubuntu and macOS, then build and publish
 
 ## Troubleshooting
 
