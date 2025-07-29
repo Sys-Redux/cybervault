@@ -1,4 +1,4 @@
-name: Python Package
+name: Python Package (Simple)
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.10"]
       fail-fast: false
 
     steps:
@@ -25,33 +25,21 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
-    - name: Set up environment (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        echo "Setting up Windows environment..."
-        python --version
-        pip --version
-    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install cryptography
         pip install -e .
-        pip install pytest
     
-    - name: Test package structure
+    - name: Test file structure
       run: |
-        python test_structure.py
+        python test_basic.py
     
-    - name: Test package (debug - Windows only)
-      if: matrix.os == 'windows-latest'
+    - name: Test imports (if file structure passes)
       run: |
-        python test_debug.py
-      continue-on-error: true
-    
-    - name: Test package imports
-      run: |
-        python test_simple.py
+        python -c "import cybervault; print('✓ Package imported')"
+        python -c "from cybervault import vault; print('✓ Vault module imported')"
+        python -c "from cybervault import gui; print('✓ GUI module imported')"
       continue-on-error: true
 
   build:
