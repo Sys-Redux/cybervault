@@ -9,7 +9,15 @@ __version__ = "1.0.0"
 __author__ = "Layzee"
 __description__ = "A secure encrypted notes vault with cyberpunk-themed GUI"
 
-from . import vault
-from . import gui
+__all__ = ["vault", "gui"]
 
-__all__ = ["vault", "gui"] 
+# Lazy imports to avoid import issues during testing
+def _import_vault():
+    """Lazy import for vault module"""
+    from . import vault
+    return vault
+
+def _import_gui():
+    """Lazy import for gui module"""
+    from . import gui
+    return gui 

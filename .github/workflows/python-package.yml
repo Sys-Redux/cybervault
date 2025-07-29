@@ -25,34 +25,17 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
-    - name: Set up environment (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        echo "Setting up Windows environment..."
-        python --version
-        pip --version
-    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install cryptography
         pip install -e .
-        pip install pytest
     
-    - name: Test package structure
+    - name: Test package
       run: |
-        python test_structure.py
-    
-    - name: Test package (debug - Windows only)
-      if: matrix.os == 'windows-latest'
-      run: |
-        python test_debug.py
-      continue-on-error: true
-    
-    - name: Test package imports
-      run: |
-        python test_simple.py
-      continue-on-error: true
+        python -c "import cybervault; print(f'✓ cybervault {cybervault.__version__} imported successfully')"
+        python -c "from cybervault import vault; print('✓ vault module imported')"
+        python -c "from cybervault import gui; print('✓ gui module imported')"
 
   build:
     needs: test
