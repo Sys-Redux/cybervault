@@ -82,6 +82,10 @@ Your encrypted vault is stored in your home directory:
 - `cryptography` library
 - `tkinter` (usually included with Python)
 
+### GUI Requirements
+
+The GUI mode (`vaultui`) requires a graphical display environment. If you're running on a headless server or in a container without a display, you can still use the command-line mode (`vault`).
+
 ## Development
 
 To contribute to CyberVault:

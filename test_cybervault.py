@@ -40,6 +40,10 @@ def test_gui_functions():
         assert hasattr(gui, 'main'), "gui module should have main function"
         print("✓ gui module has main function")
         
+        # Test that VaultGUI class can be imported
+        from cybervault.gui import VaultGUI
+        print("✓ VaultGUI class can be imported")
+        
         return True
     except Exception as e:
         print(f"✗ GUI test failed: {e}")

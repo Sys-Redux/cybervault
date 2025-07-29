@@ -27,18 +27,13 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install cryptography
         pip install -e .
         pip install pytest
     
-    - name: Test with pytest
+    - name: Test package (headless)
       run: |
-        python -c "import cybervault; print('Package imports successfully')"
-        python -c "from cybervault import vault, gui; print('Modules import successfully')"
-    
-    - name: Test command line tools
-      run: |
-        vault --help
-        vaultui --help
+        python test_headless.py
 
   build:
     needs: test
