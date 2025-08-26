@@ -23,7 +23,7 @@ pip install cybervault
 ### From Source
 
 ```bash
-git clone https://github.com/yourusername/cybervault.git
+git clone https://github.com/Sys-Redux/cybervault.git
 cd cybervault
 pip install -e .
 ```
