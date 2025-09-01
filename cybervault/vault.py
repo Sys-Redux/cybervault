@@ -19,12 +19,13 @@ MASTER_HASH_FILE = HOME_DIR / "master.hash" # Used by GUI, but good to have here
 os.makedirs(VAULT_DIR, exist_ok=True)
 
 class CyberVault:
-    def __init__(self, vault_name, password):
+    def __init__(self, vault_name, password=None):
         self.vault_name = vault_name
         self.vault_path = VAULT_DIR / f"{vault_name}.json"
         self.password = password
         self.data = self._load_vault()
-        self.fernet = self._get_fernet()
+        self.fernet = self._get_fernet() if password else None
+        self._is_unlocked = password is not None
 
     @staticmethod
     def _derive_key(password: str, salt: bytes) -> bytes:
@@ -52,19 +53,58 @@ class CyberVault:
         key = self._derive_key(self.password, salt)
         return Fernet(key)
 
+    def unlock(self, password):
+        """Unlock the vault with a password."""
+        try:
+            self.password = password
+            self.fernet = self._get_fernet()
+            # Test the password by trying to decrypt one note (if any exist)
+            if self.data["notes"]:
+                first_note_title = list(self.data["notes"].keys())[0]
+                encrypted_text = self.data["notes"][first_note_title]
+                self.fernet.decrypt(encrypted_text.encode()).decode()
+            self._is_unlocked = True
+            return True
+        except (InvalidToken, Exception):
+            self.password = None
+            self.fernet = None
+            self._is_unlocked = False
+            return False
+
+    def is_unlocked(self):
+        """Check if the vault is currently unlocked."""
+        return self._is_unlocked
+
+    def lock(self):
+        """Lock the vault by clearing the password and fernet instance."""
+        self.password = None
+        self.fernet = None
+        self._is_unlocked = False
+
     def add_note(self, title, text):
+        if not self._is_unlocked:
+            raise ValueError("Vault must be unlocked to add notes.")
         encrypted_text = self.fernet.encrypt(text.encode()).decode()
         self.data["notes"][title] = encrypted_text
         self._save_vault()
 
     def get_note(self, title):
+        """Get decrypted note content. Returns None if note doesn't exist."""
         if title not in self.data["notes"]:
             return None
+        if not self._is_unlocked:
+            raise ValueError("Vault must be unlocked to decrypt notes.")
         try:
             encrypted_text = self.data["notes"][title]
             return self.fernet.decrypt(encrypted_text.encode()).decode()
         except InvalidToken:
             raise ValueError("Invalid password or corrupted data.")
+
+    def get_encrypted_note(self, title):
+        """Get encrypted note content without decrypting."""
+        if title not in self.data["notes"]:
+            return None
+        return self.data["notes"][title]
 
     def delete_note(self, title):
         if title in self.data["notes"]:

@@ -130,4 +130,5 @@ dmypy.json
 
 # CyberVault specific
 vault.json
-master.hash 
+master.hash
+test_*.py 

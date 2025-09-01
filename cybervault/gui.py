@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog
+from tkinter import ttk, messagebox
 import os
 import json
 import base64
@@ -14,21 +14,21 @@ HOME_DIR = Path.home()
 MASTER_HASH_FILE = HOME_DIR / "master.hash"
 
 # --- Cyberpunk Colors ---
-CYBER_BG = "#181825"
-CYBER_PANEL = "#232136"
-CYBER_NEON = "#00ffe7"
-CYBER_MAGENTA = "#ff00c8"
+CYBER_BG = "#0a0a0a"  # pure black
+CYBER_PANEL = "#181825"  # dark panel
+CYBER_NEON = "#00fff7"  # neon cyan
+CYBER_MAGENTA = "#ff00c8"  # neon magenta
 CYBER_GREEN = "#00ff85"
 CYBER_TEXT = "#e0e0e0"
-CYBER_TITLE = "#00ffe7"
-CYBER_BTN = "#232136"
-CYBER_BTN_FG = "#00ffe7"
-CYBER_BTN_ACTIVE = "#ff00c8"
-CYBER_LIST_SEL = "#00ffe7"
-CYBER_LIST_SEL_FG = "#181825"
-MONO_FONT = ("Consolas", 12)
-TITLE_FONT = ("Consolas", 18, "bold")
-LABEL_FONT = ("Consolas", 12, "bold")
+CYBER_TITLE = CYBER_NEON
+CYBER_BTN = "#181825"
+CYBER_BTN_FG = CYBER_NEON
+CYBER_BTN_ACTIVE = CYBER_MAGENTA
+CYBER_LIST_SEL = CYBER_NEON
+CYBER_LIST_SEL_FG = CYBER_BG
+MONO_FONT = ("Fira Mono", 12)
+TITLE_FONT = ("Fira Mono", 20, "bold")
+LABEL_FONT = ("Fira Mono", 13, "bold")
 
 HASH_ITERATIONS = 200_000
 HASH_SALT_SIZE = 16
@@ -64,13 +64,76 @@ class VaultGUI:
         self.setup_ui()
         self.show_login()
 
+    def custom_input_dialog(self, title, prompt, show=None, parent=None):
+        """Create a custom styled input dialog that matches the cyberpunk theme"""
+        if parent is None:
+            parent = self.root
+            
+        result = None
+        
+        def on_ok():
+            nonlocal result
+            result = entry.get()
+            dialog.destroy()
+            
+        def on_cancel():
+            nonlocal result
+            result = None
+            dialog.destroy()
+            
+        dialog = tk.Toplevel(parent)
+        dialog.title(title)
+        dialog.configure(bg=CYBER_BG)
+        dialog.geometry("400x180")
+        dialog.transient(parent)
+        dialog.grab_set()
+        dialog.resizable(False, False)
+        
+        # Center the dialog
+        parent.update_idletasks()
+        x = parent.winfo_x() + (parent.winfo_width() // 2) - 200
+        y = parent.winfo_y() + (parent.winfo_height() // 2) - 90
+        dialog.geometry(f"400x180+{x}+{y}")
+        
+        frame = tk.Frame(dialog, bg=CYBER_BG, highlightbackground=CYBER_NEON, highlightthickness=3)
+        frame.pack(expand=True, fill="both", padx=10, pady=10)
+        
+        label = tk.Label(frame, text=prompt, bg=CYBER_BG, fg=CYBER_NEON, font=LABEL_FONT)
+        label.pack(pady=(15, 10))
+        
+        entry = tk.Entry(frame, show=show, font=MONO_FONT, bg=CYBER_PANEL, fg=CYBER_NEON, 
+                        insertbackground=CYBER_NEON, relief="flat", highlightthickness=2, 
+                        highlightbackground=CYBER_MAGENTA, width=30)
+        entry.pack(pady=5, ipadx=5, ipady=5)
+        entry.bind('<Return>', lambda e: on_ok())
+        
+        btn_frame = tk.Frame(frame, bg=CYBER_BG)
+        btn_frame.pack(pady=15)
+        
+        ok_btn = tk.Button(btn_frame, text="OK", command=on_ok, font=LABEL_FONT, 
+                          bg=CYBER_BTN, fg=CYBER_BTN_FG, activebackground=CYBER_BTN_ACTIVE, 
+                          activeforeground=CYBER_TEXT, relief="flat", borderwidth=2, 
+                          highlightbackground=CYBER_NEON, pady=5)
+        ok_btn.pack(side="left", padx=8)
+        
+        cancel_btn = tk.Button(btn_frame, text="Cancel", command=on_cancel, font=LABEL_FONT, 
+                              bg=CYBER_BTN, fg=CYBER_BTN_FG, activebackground=CYBER_BTN_ACTIVE, 
+                              activeforeground=CYBER_TEXT, relief="flat", borderwidth=2, 
+                              highlightbackground=CYBER_MAGENTA, pady=5)
+        cancel_btn.pack(side="left", padx=8)
+        
+        entry.focus_set()
+        dialog.wait_window()
+        
+        return result
+
     def apply_cyberpunk_style(self):
         self.style.theme_use('clam')
         # ... (style configuration remains the same)
         self.style.configure("TFrame", background=CYBER_BG)
         self.style.configure("TLabel", background=CYBER_BG, foreground=CYBER_TEXT, font=LABEL_FONT)
         self.style.configure("Title.TLabel", background=CYBER_BG, foreground=CYBER_TITLE, font=TITLE_FONT)
-        self.style.configure("TButton", background=CYBER_BTN, foreground=CYBER_BTN_FG, font=LABEL_FONT, borderwidth=2)
+        self.style.configure("TButton", background=CYBER_BTN, foreground=CYBER_BTN_FG, font=LABEL_FONT, borderwidth=2, relief="flat")
         self.style.map("TButton",
             background=[('active', CYBER_BTN_ACTIVE), ('!active', CYBER_BTN)],
             foreground=[('active', CYBER_TEXT), ('!active', CYBER_BTN_FG)])
@@ -101,6 +164,7 @@ class VaultGUI:
 
         self.vault_listbox = tk.Listbox(vault_list_frame, bg=CYBER_PANEL, fg=CYBER_NEON, selectbackground=CYBER_LIST_SEL, selectforeground=CYBER_LIST_SEL_FG, font=MONO_FONT, highlightthickness=0, relief=tk.FLAT)
         self.vault_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.vault_listbox.bind('<Double-Button-1>', self.on_vault_double_click)
 
         vault_buttons_frame = ttk.Frame(self.vault_selection_frame, style="TFrame")
         vault_buttons_frame.pack(pady=10)
@@ -115,6 +179,8 @@ class VaultGUI:
         ttk.Button(top_frame, text="Save Note", command=self.save_note, style="TButton").pack(side=tk.LEFT, padx=(0, 5))
         ttk.Button(top_frame, text="Add Note", command=self.add_note, style="TButton").pack(side=tk.LEFT, padx=(0, 5))
         ttk.Button(top_frame, text="Delete Note", command=self.delete_note, style="TButton").pack(side=tk.LEFT, padx=(0, 5))
+        self.unlock_button = ttk.Button(top_frame, text="Unlock Vault", command=self.unlock_vault_for_editing, style="TButton")
+        self.unlock_button.pack(side=tk.LEFT, padx=(5, 0))
         ttk.Button(top_frame, text="< Back to Vaults", command=self.logout, style="TButton").pack(side=tk.RIGHT, padx=(5, 0))
 
         content_frame = ttk.Frame(self.note_frame, style="TFrame")
@@ -151,11 +217,11 @@ class VaultGUI:
     def set_master_password(self):
         # ... (this method remains the same)
         while True:
-            pwd1 = simpledialog.askstring("Set Master Password", "Enter a new master password:", show='*')
+            pwd1 = self.custom_input_dialog("Set Master Password", "Enter a new master password:", show='*')
             if not pwd1:
                 messagebox.showerror("Error", "Password cannot be empty.")
                 continue
-            pwd2 = simpledialog.askstring("Set Master Password", "Confirm master password:", show='*')
+            pwd2 = self.custom_input_dialog("Set Master Password", "Confirm master password:", show='*')
             if pwd1 != pwd2:
                 messagebox.showerror("Error", "Passwords do not match.")
                 continue
@@ -201,28 +267,23 @@ class VaultGUI:
             return
         vault_name = self.vault_listbox.get(selection[0])
 
-        vault_password = simpledialog.askstring(f"Password for {vault_name}", f"Enter password for '{vault_name}':", show='*')
-        if not vault_password:
-            return
-
         try:
-            self.active_vault = CyberVault(vault_name, vault_password)
+            # Open vault without password first
+            self.active_vault = CyberVault(vault_name)
             self.show_note_editor()
-        except (InvalidToken, ValueError):
-            messagebox.showerror("Error", "Invalid password for this vault.")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to open vault: {e}")
 
     def create_new_vault(self):
-        vault_name = simpledialog.askstring("Create New Vault", "Enter a name for the new vault:")
+        vault_name = self.custom_input_dialog("Create New Vault", "Enter a name for the new vault:")
         if not vault_name: return
         if vault_name in CyberVault.list_vaults():
             messagebox.showerror("Error", f"Vault '{vault_name}' already exists.")
             return
 
-        password = simpledialog.askstring("Create New Vault", f"Enter a password for '{vault_name}':", show='*')
+        password = self.custom_input_dialog("Create New Vault", f"Enter a password for '{vault_name}':", show='*')
         if not password: return
-        password_confirm = simpledialog.askstring("Create New Vault", "Confirm password:", show='*')
+        password_confirm = self.custom_input_dialog("Create New Vault", "Confirm password:", show='*')
         if password != password_confirm:
             messagebox.showerror("Error", "Passwords do not match.")
             return
@@ -249,19 +310,62 @@ class VaultGUI:
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to delete vault: {e}")
 
-    def show_note_editor(self):
+    def show_note_editor(self, preserve_current_note=False):
         self.vault_selection_frame.pack_forget()
         self.note_frame.pack(fill=tk.BOTH, expand=True)
-        self.note_list_title.config(text=f"Notes in {self.active_vault.vault_name}")
+        vault_status = "🔒 LOCKED" if not self.active_vault.is_unlocked() else "🔓 UNLOCKED"
+        self.note_list_title.config(text=f"Notes in {self.active_vault.vault_name} [{vault_status}]")
         self.refresh_note_list()
-        self.note_text.delete(1.0, tk.END)
-        self.current_note_title = None
-        self.status_var.set(f"Opened vault: {self.active_vault.vault_name}")
+        
+        # Only clear note content if not preserving current note
+        if not preserve_current_note:
+            self.note_text.delete(1.0, tk.END)
+            self.current_note_title = None
+        
+        # Update button text and enable/disable based on vault state
+        if self.active_vault.is_unlocked():
+            self.unlock_button.config(text="Lock Vault", command=self.lock_vault)
+            self.status_var.set(f"Opened vault: {self.active_vault.vault_name} (Unlocked)")
+        else:
+            self.unlock_button.config(text="Unlock Vault", command=self.unlock_vault_for_editing)
+            self.status_var.set(f"Opened vault: {self.active_vault.vault_name} (Locked - notes are encrypted)")
 
     def logout(self):
         self.active_vault = None
         self.current_note_title = None
         self.show_vault_selection()
+
+    def unlock_vault_for_editing(self):
+        """Unlock the currently open vault for editing."""
+        if not self.active_vault:
+            return
+            
+        password = self.custom_input_dialog("Unlock Vault", f"Enter password for '{self.active_vault.vault_name}':", show='*')
+        if not password:
+            return
+            
+        try:
+            if self.active_vault.unlock(password):
+                # Preserve the current note when showing the editor after unlock
+                self.show_note_editor(preserve_current_note=True)
+                # Delay animation slightly to ensure UI is updated
+                if self.current_note_title:
+                    self.root.after(100, lambda: self.animate_decryption(self.current_note_title))
+            else:
+                messagebox.showerror("Error", "Invalid password.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to unlock vault: {e}")
+
+    def lock_vault(self):
+        """Lock the currently open vault."""
+        if not self.active_vault:
+            return
+            
+        self.active_vault.lock()
+        self.show_note_editor()
+        # Reload current note to show encrypted content
+        if self.current_note_title:
+            self.load_note(self.current_note_title)
 
     def refresh_note_list(self):
         self.note_listbox.delete(0, tk.END)
@@ -275,19 +379,93 @@ class VaultGUI:
             title = self.note_listbox.get(selection[0])
             self.load_note(title)
 
+    def on_vault_double_click(self, event):
+        """Handle double-click on vault listbox to open vault."""
+        self.open_selected_vault()
+
     def load_note(self, title):
         try:
-            content = self.active_vault.get_note(title)
+            if self.active_vault.is_unlocked():
+                content = self.active_vault.get_note(title)
+            else:
+                # Show actual encrypted content when vault is locked
+                content = self.active_vault.get_encrypted_note(title)
+                if not content:
+                    content = "[Note not found]"
+            
+            # Always enable text widget before updating content
+            self.note_text.config(state=tk.NORMAL)
             self.note_text.delete(1.0, tk.END)
-            self.note_text.insert(1.0, content)
+            if content:
+                self.note_text.insert(1.0, content)
             self.current_note_title = title
-            self.status_var.set(f"Loaded note: {title}")
+            
+            # Make text readonly when vault is locked
+            if not self.active_vault.is_unlocked():
+                self.note_text.config(state=tk.DISABLED, fg=CYBER_TEXT)
+                self.status_var.set(f"Loaded encrypted note: {title} (Vault locked)")
+            else:
+                self.note_text.config(state=tk.NORMAL, fg=CYBER_MAGENTA)
+                self.status_var.set(f"Loaded note: {title}")
+                
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load note: {e}")
 
+    def animate_decryption(self, title):
+        """Animate the decryption process for the current note."""
+        if not self.active_vault or not self.active_vault.is_unlocked():
+            return
+            
+        try:
+            # Get the encrypted and decrypted content
+            encrypted_content = self.active_vault.get_encrypted_note(title)
+            decrypted_content = self.active_vault.get_note(title)
+            
+            if not encrypted_content or not decrypted_content:
+                return
+                
+            # Enable text widget for animation
+            self.note_text.config(state=tk.NORMAL)
+            
+            # Animation phases
+            phases = [
+                "[DECRYPTING...]",
+                "[DECRYPTING▸..]",
+                "[DECRYPTING▸▸.]", 
+                "[DECRYPTING▸▸▸]",
+                "[DECRYPTION COMPLETE]"
+            ]
+            
+            def animate_phase(phase_index):
+                if phase_index < len(phases):
+                    self.note_text.delete(1.0, tk.END)
+                    self.note_text.insert(1.0, phases[phase_index])
+                    self.note_text.config(fg=CYBER_NEON)
+                    self.status_var.set(f"Decrypting note: {title}...")
+                    # Schedule next phase
+                    self.root.after(300, lambda: animate_phase(phase_index + 1))
+                else:
+                    # Animation complete, show decrypted content
+                    self.note_text.delete(1.0, tk.END)
+                    self.note_text.insert(1.0, decrypted_content)
+                    self.note_text.config(fg=CYBER_MAGENTA, state=tk.NORMAL)
+                    self.status_var.set(f"Decrypted note: {title}")
+            
+            # Start animation
+            animate_phase(0)
+            
+        except Exception as e:
+            # Fallback to normal loading if animation fails
+            self.load_note(title)
+
     def add_note(self):
-        if not self.active_vault: return
-        title = simpledialog.askstring("Add Note", "Enter note title:")
+        if not self.active_vault:
+            return
+        if not self.active_vault.is_unlocked():
+            messagebox.showwarning("Warning", "Vault must be unlocked to add new notes.")
+            return
+            
+        title = self.custom_input_dialog("Add Note", "Enter note title:")
         if title:
             if title in self.active_vault.list_notes():
                 messagebox.showerror("Error", "A note with this title already exists.")
@@ -307,6 +485,9 @@ class VaultGUI:
         if not self.active_vault or not self.current_note_title:
             messagebox.showwarning("Warning", "No note selected to save.")
             return
+        if not self.active_vault.is_unlocked():
+            messagebox.showwarning("Warning", "Vault must be unlocked to save notes.")
+            return
         
         content = self.note_text.get(1.0, tk.END).strip()
         try:
@@ -319,14 +500,19 @@ class VaultGUI:
         if not self.active_vault or not self.current_note_title:
             messagebox.showwarning("Warning", "No note selected to delete.")
             return
+        if not self.active_vault.is_unlocked():
+            messagebox.showwarning("Warning", "Vault must be unlocked to delete notes.")
+            return
         
         if messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete note '{self.current_note_title}'?"):
             try:
-                self.active_vault.delete_note(self.current_note_title)
-                self.refresh_note_list()
-                self.note_text.delete(1.0, tk.END)
-                self.current_note_title = None
-                self.status_var.set("Note deleted.")
+                if self.active_vault.delete_note(self.current_note_title):
+                    self.refresh_note_list()
+                    self.note_text.delete(1.0, tk.END)
+                    self.current_note_title = None
+                    self.status_var.set("Note deleted.")
+                else:
+                    messagebox.showwarning("Warning", "Note not found.")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to delete note: {e}")
 
